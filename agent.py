@@ -98,20 +98,20 @@ class DecomoboAgent:
         # Construir texto resumido del catálogo para el prompt
         lineas = []
         for p in productos:
-            nombre = p.get("nombre", "")
-            precio = p.get("precio", "")
-            colores = p.get("colores", [])
+            titulo = p.get("titulo", "")
+            precio = p.get("precio", 0)
             disponible = p.get("disponible", True)
-            link = p.get("link", "")
+            url = p.get("url", "")
             categoria = p.get("categoria", "")
             serie = p.get("serie", "")
+            linea = p.get("linea", "")
+            stock = p.get("stock", 0)
 
-            colores_txt = ", ".join(colores) if colores else "color único"
             estado = "✅" if disponible else "⚠️ Agotado"
 
             lineas.append(
-                f"- {nombre} | ${precio:,.0f} MXN | Colores: {colores_txt} | "
-                f"{estado} | {link}"
+                f"- {titulo} | ${precio:,.0f} MXN | {categoria} | {serie} | "
+                f"{estado} | {url}"
             )
 
         self.catalogo_texto = "\n".join(lineas) if lineas else "Catálogo vacío."
@@ -126,13 +126,15 @@ class DecomoboAgent:
 
         resultados = []
         for p in self.productos:
-            nombre = p.get("nombre", "").lower()
+            titulo = p.get("titulo", "").lower()
             categoria = p.get("categoria", "").lower()
             serie = p.get("serie", "").lower()
+            linea = p.get("linea", "").lower()
 
             # Buscar coincidencia por cualquier palabra
             score = sum(1 for palabra in palabras
-                       if palabra in nombre or palabra in categoria or palabra in serie)
+                       if palabra in titulo or palabra in categoria
+                       or palabra in serie or palabra in linea)
 
             if score > 0:
                 resultados.append((score, p))

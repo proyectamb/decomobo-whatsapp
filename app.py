@@ -38,7 +38,8 @@ def cargar_catalogo():
     try:
         resp = requests.get(CATALOG_URL, timeout=15)
         resp.raise_for_status()
-        productos = resp.json()
+        data = resp.json()
+        productos = data.get("productos", [])
         agent.actualizar_catalogo(productos)
         logger.info(f"Catálogo cargado: {len(productos)} productos")
     except Exception as e:
