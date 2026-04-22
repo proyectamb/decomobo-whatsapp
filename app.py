@@ -140,9 +140,14 @@ def recibir_mensaje():
         # Agregar respuesta al historial
         conversations.agregar_mensaje(telefono, "agente", respuesta)
 
-        # Enviar por WhatsApp
-        enviar_mensaje(telefono, respuesta)
-        logger.info(f"Respuesta enviada a {telefono}: {respuesta[:100]}")
+        # Dividir en mensajes múltiples si es largo
+        partes = dividir_mensaje(respuesta)
+        for parte in partes:
+            enviar_mensaje(telefono, parte)
+            if len(partes) > 1:
+                time.sleep(1)  # Pausa entre mensajes para que lleguen en orden
+
+        logger.info(f"Respuesta enviada a {telefono} ({len(partes)} msg): {respuesta[:100]}")
 
     # Notificar a Alfonso (en hilo separado para no bloquear)
     threading.Thread(
@@ -174,6 +179,47 @@ def ver_conversaciones():
 
 
 # ── Funciones de WhatsApp Cloud API ────────────────────────────
+def dividir_mensaje(texto, max_chars=500):
+    """
+    Divide un mensaje largo en partes que quepan en WhatsApp.
+    Corta en saltos de línea dobles, luego en puntos, nunca a media palabra.
+    """
+    if len(texto) <= max_chars:
+        return [texto]
+
+    partes = []
+
+    # Primero intentar dividir por párrafos (doble salto de línea)
+    parrafos = texto.split("\n\n")
+    if len(parrafos) > 1:
+        parte_actual = ""
+        for parrafo in parrafos:
+            if len(parte_actual) + len(parrafo) + 2 <= max_chars:
+                parte_actual = (parte_actual + "\n\n" + parrafo).strip()
+            else:
+                if parte_actual:
+                    partes.append(parte_actual.strip())
+                parte_actual = parrafo
+        if parte_actual:
+            partes.append(parte_actual.strip())
+        return [p for p in partes if p]
+
+    # Si no hay párrafos, dividir por oraciones (punto + espacio)
+    oraciones = texto.replace(". ", ".|").split("|")
+    parte_actual = ""
+    for oracion in oraciones:
+        if len(parte_actual) + len(oracion) + 1 <= max_chars:
+            parte_actual = (parte_actual + " " + oracion).strip()
+        else:
+            if parte_actual:
+                partes.append(parte_actual.strip())
+            parte_actual = oracion
+    if parte_actual:
+        partes.append(parte_actual.strip())
+
+    return [p for p in partes if p] if partes else [texto]
+
+
 def enviar_mensaje(telefono, texto):
     """Envía un mensaje de texto por WhatsApp Cloud API."""
     url = f"https://graph.facebook.com/v25.0/{WHATSAPP_PHONE_ID}/messages"
