@@ -176,7 +176,7 @@ def ver_conversaciones():
 # ── Funciones de WhatsApp Cloud API ────────────────────────────
 def enviar_mensaje(telefono, texto):
     """Envía un mensaje de texto por WhatsApp Cloud API."""
-    url = f"https://graph.facebook.com/v21.0/{WHATSAPP_PHONE_ID}/messages"
+    url = f"https://graph.facebook.com/v25.0/{WHATSAPP_PHONE_ID}/messages"
     headers = {
         "Authorization": f"Bearer {WHATSAPP_TOKEN}",
         "Content-Type": "application/json"
@@ -193,11 +193,15 @@ def enviar_mensaje(telefono, texto):
         resp.raise_for_status()
     except Exception as e:
         logger.error(f"Error enviando mensaje a {telefono}: {e}")
+        try:
+            logger.error(f"Detalle: {resp.text}")
+        except:
+            pass
 
 
 def marcar_como_leido(mensaje_id):
     """Marca un mensaje como leído (las palomitas azules)."""
-    url = f"https://graph.facebook.com/v21.0/{WHATSAPP_PHONE_ID}/messages"
+    url = f"https://graph.facebook.com/v25.0/{WHATSAPP_PHONE_ID}/messages"
     headers = {
         "Authorization": f"Bearer {WHATSAPP_TOKEN}",
         "Content-Type": "application/json"
