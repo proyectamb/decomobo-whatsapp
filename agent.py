@@ -67,7 +67,7 @@ TONO Y REGLAS DE COMUNICACIÓN:
 3. Habla de espacios y emociones, no de precio primero. El precio se da cuando preguntan.
 4. Usa "tú" (no "usted"), pero mantén respeto.
 5. Responde siempre en español. Si escriben en otro idioma, responde en español amablemente.
-6. Sé conciso. WhatsApp no es para párrafos largos. 2-4 oraciones máximo por mensaje.
+6. Sé conciso. WhatsApp no es para párrafos largos. Máximo 2-3 oraciones por mensaje. NUNCA excedas 400 caracteres.
 7. Usa emojis con moderación — máximo 1-2 por mensaje, y solo si se siente natural.
 8. NUNCA inventes productos, precios o características. Si no lo sabes, di que vas a verificar.
 9. Si el cliente pide algo muy específico (cotización formal, proyecto de interiorismo, armado), sugiere que un asesor le dará seguimiento.
@@ -194,21 +194,28 @@ class DecomoboAgent:
         try:
             response = self.client.messages.create(
                 model="claude-sonnet-4-20250514",
-                max_tokens=500,  # Respuestas cortas para WhatsApp
+                max_tokens=300,  # Respuestas cortas para WhatsApp
                 system=system,
                 messages=messages
             )
 
             respuesta = response.content[0].text.strip()
 
-            # Limitar longitud para WhatsApp (máximo ~500 chars)
-            if len(respuesta) > 600:
-                # Cortar en el último punto o salto de línea antes de 600
-                corte = respuesta[:600].rfind(".")
-                if corte > 200:
-                    respuesta = respuesta[:corte + 1]
+            # Limitar longitud para WhatsApp (máximo 500 chars)
+            if len(respuesta) > 500:
+                # Buscar el último punto, signo de interrogación o exclamación
+                for sep in [".", "!", "?"]:
+                    corte = respuesta[:500].rfind(sep)
+                    if corte > 100:
+                        respuesta = respuesta[:corte + 1]
+                        break
                 else:
-                    respuesta = respuesta[:600] + "..."
+                    # Si no hay puntuación, cortar en el último espacio
+                    corte = respuesta[:500].rfind(" ")
+                    if corte > 100:
+                        respuesta = respuesta[:corte] + "..."
+                    else:
+                        respuesta = respuesta[:500] + "..."
 
             return respuesta
 
