@@ -196,18 +196,33 @@ class DecomoboAgent:
         try:
             response = self.client.messages.create(
                 model="claude-sonnet-4-20250514",
-                max_tokens=500,  # Respuestas completas, se dividen en múltiples mensajes si es necesario
+                max_tokens=2048,
                 system=system,
                 messages=messages
             )
 
             respuesta = response.content[0].text.strip()
 
+            # Si Claude se cortó por límite de tokens, limpiar la respuesta
+            if response.stop_reason == "max_tokens":
+                # Buscar la última oración completa (termina en . ! ?)
+                for sep in [".", "!", "?"]:
+                    pos = respuesta.rfind(sep)
+                    if pos > 50:
+                        respuesta = respuesta[:pos + 1]
+                        break
+                else:
+                    # Si no hay puntuación, cortar en el último espacio
+                    pos = respuesta.rfind(" ")
+                    if pos > 50:
+                        respuesta = respuesta[:pos] + "."
+
             # Limpiar markdown que no se ve bien en WhatsApp
             respuesta = respuesta.replace("**", "")
             respuesta = respuesta.replace("__", "")
             respuesta = respuesta.replace("##", "")
             respuesta = respuesta.replace("# ", "")
+            respuesta = respuesta.replace("- ", "• ")  # Guiones a bullets
 
             return respuesta
 
